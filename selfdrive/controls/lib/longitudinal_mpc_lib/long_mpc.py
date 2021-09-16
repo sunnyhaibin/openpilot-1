@@ -154,7 +154,7 @@ class LongitudinalMpc():
     self.solver.constraints_set(0, "lbx", self.x0)
     self.solver.constraints_set(0, "ubx", self.x0)
 
-  def update(self, carstate, model, v_cruise):
+  def update(self, carstate, radarstate, v_cruise, model):
     v_cruise_clipped = clip(v_cruise, self.x0[1] - 10., self.x0[1] + 10.0)
     position = v_cruise_clipped * self.T_IDXS
     speed = v_cruise_clipped * np.ones(N+1)

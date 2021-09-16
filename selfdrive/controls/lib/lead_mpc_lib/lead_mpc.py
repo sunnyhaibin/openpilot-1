@@ -3,6 +3,7 @@ import os
 import math
 import numpy as np
 
+from cereal import log
 from common.realtime import sec_since_boot
 from common.numpy_fast import clip
 from selfdrive.swaglog import cloudlog
@@ -125,6 +126,16 @@ def gen_lead_mpc_solver():
   return ocp
 
 
+def get_stop_line_lead(model):
+  lead = log.RadarState.LeadData.new_message()
+  lead.status = model.stopLine.prob > .75
+  lead.dRel = model.stopLine.x + model.stopLine.xStd
+  lead.vLead = 0
+  lead.aLeadK = 0
+  lead.aLeadTau = 0
+  return lead
+
+
 class LeadMpc():
   def __init__(self, lead_id):
     self.lead_id = lead_id
@@ -196,13 +207,15 @@ class LeadMpc():
       t += dt
       self.solver.set(i, 'x', np.array([x_ego, v_ego, a_ego]))
 
-  def update(self, carstate, radarstate, v_cruise):
+  def update(self, carstate, radarstate, v_cruise, model):
     self.crashing = False
     v_ego = self.x0[1]
     if self.lead_id == 0:
       lead = radarstate.leadOne
-    else:
+    elif self.lead_id == 1:
       lead = radarstate.leadTwo
+    else:
+      lead = get_stop_line_lead(model)
     self.status = lead.status
     if lead is not None and lead.status:
       x_lead = lead.dRel

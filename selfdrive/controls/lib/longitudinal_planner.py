@@ -50,6 +50,7 @@ class Planner():
     self.mpcs = {}
     self.mpcs['lead0'] = LeadMpc(0)
     self.mpcs['lead1'] = LeadMpc(1)
+    self.mpcs['stop'] = LeadMpc(2)
     self.mpcs['cruise'] = LongitudinalMpc()
 
     self.fcw = False
@@ -104,7 +105,7 @@ class Planner():
     next_a = np.inf
     for key in self.mpcs:
       self.mpcs[key].set_cur_state(self.v_desired, self.a_desired)
-      self.mpcs[key].update(sm['carState'], sm['radarState'], v_cruise)
+      self.mpcs[key].update(sm['carState'], sm['radarState'], v_cruise, sm['modelV2'])
       if self.mpcs[key].status and self.mpcs[key].a_solution[5] < next_a:  # picks slowest solution from accel in ~0.2 seconds
         self.longitudinalPlanSource = key
         self.v_desired_trajectory = self.mpcs[key].v_solution[:CONTROL_N]
