@@ -47,8 +47,8 @@ def run_following_distance_simulation(v_lead, t_end=200.0):
     mpc.set_cur_state(v_ego, a_ego)
     if first:  # Make sure MPC is converged on first timestep
       for _ in range(20):
-        mpc.update(CS.carState, radarstate.radarState, 0)
-    mpc.update(CS.carState, radarstate.radarState, 0)
+        mpc.update(CS.carState, radarstate.radarState, 0, None)
+    mpc.update(CS.carState, radarstate.radarState, 0, None)
 
     # Choose slowest of two solutions
     v_ego, a_ego = float(mpc.v_solution[5]), float(mpc.a_solution[5])
