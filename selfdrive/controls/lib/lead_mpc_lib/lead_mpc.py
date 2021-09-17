@@ -126,9 +126,9 @@ def gen_lead_mpc_solver():
   return ocp
 
 
-def get_stop_line_lead(model):
+def get_stop_line_lead(carstate, model):
   lead = log.RadarState.LeadData.new_message()
-  lead.status = model.stopLine.prob > 0.5
+  lead.status = model.stopLine.prob > 0.5 and not carstate.gasPressed
   lead.dRel = model.stopLine.x + 6.0
   lead.vLead = 0
   lead.aLeadK = 0
@@ -215,7 +215,7 @@ class LeadMpc():
     elif self.lead_id == 1:
       lead = radarstate.leadTwo
     else:
-      lead = get_stop_line_lead(model)
+      lead = get_stop_line_lead(carstate, model)
     self.status = lead.status
     if lead is not None and lead.status:
       x_lead = lead.dRel
