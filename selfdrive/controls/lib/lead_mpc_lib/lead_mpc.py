@@ -128,8 +128,8 @@ def gen_lead_mpc_solver():
 
 def get_stop_line_lead(model):
   lead = log.RadarState.LeadData.new_message()
-  lead.status = model.stopLine.prob > .75
-  lead.dRel = model.stopLine.x + model.stopLine.xStd
+  lead.status = model.stopLine.prob > 0.5
+  lead.dRel = model.stopLine.x + 6.0
   lead.vLead = 0
   lead.aLeadK = 0
   lead.aLeadTau = 0
