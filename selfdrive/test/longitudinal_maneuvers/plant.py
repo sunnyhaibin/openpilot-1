@@ -89,7 +89,7 @@ class Plant():
 
 
     control.controlsState.longControlState = LongCtrlState.pid
-    control.controlsState.vCruise = 130
+    control.controlsState.vCruise = 200
     car_state.carState.vEgo = float(self.speed)
 
 
