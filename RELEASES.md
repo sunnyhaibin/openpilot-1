@@ -4,6 +4,7 @@ Version 0.8.13 (2022-XX-XX)
  * Roll compensation
  * Improved camera focus on the comma two
  * Subaru ECU firmware fingerprinting thanks to martinl!
+ * Hyundai Kona Electric (EV) 2022 support thanks to sunnyhaibin!
  * Hyundai Santa Fe Plug-in Hybrid 2022 support thanks to sunnyhaibin!
  * Subaru Impreza 2020 support thanks to martinl!
  * Toyota Avalon 2022 support thanks to sshane!
