@@ -112,8 +112,8 @@
 | Hyundai   | Ioniq Hybrid 2020-22            | SCC + LFA         | Stock            | 0mph               | 0mph         |
 | Hyundai   | Ioniq PHEV 2020-21              | SCC + LKAS        | Stock            | 0mph               | 0mph         |
 | Hyundai   | Kona 2020                       | SCC + LKAS        | Stock            | 0mph               | 0mph         |
-| Hyundai   | Kona Electric 2018-19          | SCC + LKAS        | Stock            | 0mph               | 0mph         |
-| Hyundai   | Kona Electric 2022               | All               | Stock            | 0mph               | 0mph         |
+| Hyundai   | Kona Electric 2018-19           | SCC + LKAS        | Stock            | 0mph               | 0mph         |
+| Hyundai   | Kona Electric 2022              | All               | Stock            | 0mph               | 0mph         |
 | Hyundai   | Kona Hybrid 2020                | SCC + LKAS        | Stock            | 0mph               | 0mph         |
 | Hyundai   | Santa Fe 2019-20                | All               | Stock            | 0mph               | 0mph         |
 | Hyundai   | Santa Fe 2021-22                | All               | Stock            | 0mph               | 0mph         |
