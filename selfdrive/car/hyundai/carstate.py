@@ -211,7 +211,7 @@ class CarState(CarStateBase):
     self.leftBlinkerOn = cp.vl["BLINKERS"]["LEFT_LAMP"] != 0
     self.rightBlinkerOn = cp.vl["BLINKERS"]["RIGHT_LAMP"] != 0
 
-    ret.cruiseState.available = cruise_info_bus.vl["CRUISE_INFO"]["CRUISE_MAIN"] == 1
+    ret.cruiseState.available = True
     ret.cruiseState.enabled = cp.vl["SCC1"]["CRUISE_ACTIVE"] == 1
     ret.cruiseState.standstill = cruise_info_bus.vl["CRUISE_INFO"]["CRUISE_STANDSTILL"] == 1
 
@@ -220,9 +220,9 @@ class CarState(CarStateBase):
 
     if ret.cruiseState.available:
       if self.enable_mads:
-        if self.prev_mads_enabled != 1:
-          if self.mads_enabled == 1:
-            self.madsEnabled = not self.madsEnabled
+        if (self.prev_mads_enabled != 1 and self.mads_enabled == 1) or \
+          (self.prev_main_buttons != 1 and self.main_buttons[-1] == 1):
+          self.madsEnabled = not self.madsEnabled
         if self.acc_mads_combo:
           if not self.prev_acc_mads_combo and ret.cruiseState.enabled:
             self.madsEnabled = True
