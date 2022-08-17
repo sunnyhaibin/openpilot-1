@@ -5,7 +5,7 @@
 #include <chrono>
 
 #include "selfdrive/ui/qt/api.h"
-#include "selfdrive/ui/qt/offroad/sunnypilot_settings.h"
+#include "selfdrive/ui/qt/offroad/settings_test.h"
 #include "selfdrive/ui/qt/widgets/input.h"
 
 #include "selfdrive/ui/ui.h"
