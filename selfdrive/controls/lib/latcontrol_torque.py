@@ -6,6 +6,8 @@ from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.controls.lib.drive_helpers import apply_deadzone
 from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
+from common.params import Params
+from decimal import Decimal
 
 # At higher speeds (25+mph) we can assume:
 # Lateral acceleration achieved by a specific car correlates to
@@ -33,7 +35,34 @@ class LatControlTorque(LatControl):
     self.kf = CP.lateralTuning.torque.kf
     self.steering_angle_deadzone_deg = CP.lateralTuning.torque.steeringAngleDeadzoneDeg
 
+    self.params = Params()
+    self._torque_max_lat_accel = 0
+    self._torque_friction = 0
+    self._steering_angle_deadzone_deg = 0
+    self.frame = 0
+    self.custom_torque = False
+    self.custom_torque_timer = 0
+
+  def live_tune(self):
+    self.frame += 1
+    if self.frame % 300 == 0:
+      self._torque_max_lat_accel = float(Decimal(self.params.get("TorqueMaxLatAccel", encoding="utf8")) * Decimal('0.01'))
+      self._torque_friction = float(Decimal(self.params.get("TorqueFriction", encoding="utf8")) * Decimal('0.01'))
+      self._steering_angle_deadzone_deg = float(Decimal(self.params.get("TorqueDeadzoneDeg", encoding="utf8")) * Decimal('0.01'))
+      self.friction = self._torque_friction
+      self.steering_angle_deadzone_deg = self._steering_angle_deadzone_deg
+      self.pid = PIDController(1.0 / self._torque_max_lat_accel, 0.1 / self._torque_max_lat_accel,
+                               k_f=1.0 / self._torque_max_lat_accel, pos_limit=self.steer_max, neg_limit=-self.steer_max)
+      self.kf = 1.0 / self._torque_max_lat_accel
+      self.frame = 0
+
   def update(self, active, CS, VM, params, last_actuators, steer_limited, desired_curvature, desired_curvature_rate, llk):
+    self.custom_torque_timer += 1
+    if self.custom_torque_timer > 100:
+      self.custom_torque_timer = 0
+      self.custom_torque = self.params.get_bool("CustomTorqueLateral")
+    if self.custom_torque:
+      self.live_tune()
     pid_log = log.ControlsState.LateralTorqueState.new_message()
 
     if CS.vEgo < MIN_STEER_SPEED or not active:

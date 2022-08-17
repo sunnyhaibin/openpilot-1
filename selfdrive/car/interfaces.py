@@ -14,6 +14,7 @@ from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
 from selfdrive.controls.lib.events import Events
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from common.params import Params
+from decimal import Decimal
 
 GearShifter = car.CarState.GearShifter
 EventName = car.CarEvent.EventName
@@ -144,13 +145,17 @@ class CarInterfaceBase(ABC):
   def configure_torque_tune(candidate, tune, steering_angle_deadzone_deg=0.0, use_steering_angle=True):
     params = get_torque_params(candidate)
 
+    torque_max_lat_accel = float(Decimal(Params().get("TorqueMaxLatAccel", encoding="utf8")) * Decimal('0.01'))
+    torque_friction = float(Decimal(Params().get("TorqueFriction", encoding="utf8")) * Decimal('0.01'))
+    torque_deadzone_deg = float(Decimal(Params().get("TorqueDeadzoneDeg", encoding="utf8")) * Decimal('0.01'))
+
     tune.init('torque')
     tune.torque.useSteeringAngle = use_steering_angle
-    tune.torque.kp = 1.0 / params['LAT_ACCEL_FACTOR']
-    tune.torque.kf = 1.0 / params['LAT_ACCEL_FACTOR']
-    tune.torque.ki = 0.1 / params['LAT_ACCEL_FACTOR']
-    tune.torque.friction = params['FRICTION']
-    tune.torque.steeringAngleDeadzoneDeg = steering_angle_deadzone_deg
+    tune.torque.kp = 1.0 / (params['LAT_ACCEL_FACTOR'] if not Params().get_bool("CustomTorqueLateral") else torque_max_lat_accel)
+    tune.torque.kf = 1.0 / (params['LAT_ACCEL_FACTOR'] if not Params().get_bool("CustomTorqueLateral") else torque_max_lat_accel)
+    tune.torque.ki = 0.1 / (params['LAT_ACCEL_FACTOR'] if not Params().get_bool("CustomTorqueLateral") else torque_max_lat_accel)
+    tune.torque.friction = (params['FRICTION'] if not Params().get_bool("CustomTorqueLateral") else torque_friction)
+    tune.torque.steeringAngleDeadzoneDeg = steering_angle_deadzone_deg if not Params().get_bool("CustomTorqueLateral") else torque_deadzone_deg
 
   @abstractmethod
   def _update(self, c: car.CarControl) -> car.CarState:
