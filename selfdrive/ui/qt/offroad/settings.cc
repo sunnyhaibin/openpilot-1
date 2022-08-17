@@ -16,6 +16,7 @@
 #include "common/watchdog.h"
 #include "common/util.h"
 #include "system/hardware/hw.h"
+#include "selfdrive/ui/qt/offroad/settings_test.h"
 #include "selfdrive/ui/qt/widgets/controls.h"
 #include "selfdrive/ui/qt/widgets/input.h"
 #include "selfdrive/ui/qt/widgets/scrollview.h"
@@ -366,6 +367,8 @@ SettingsWindow::SettingsWindow(QWidget *parent) : QFrame(parent) {
   panels.push_back({tr("Navigation"), map_panel});
   QObject::connect(map_panel, &MapPanel::closeSettings, this, &SettingsWindow::closeSettings);
 #endif
+
+  panels.push_back({"SP - Controls", new SPControlsPanel(this)});
 
   const int padding = panels.size() > 3 ? 25 : 35;
 

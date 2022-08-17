@@ -358,6 +358,7 @@ std::optional<bool> send_panda_states(PubMaster *pm, const std::vector<Panda *> 
     ps.setIgnitionLine(health.ignition_line_pkt);
     ps.setIgnitionCan(health.ignition_can_pkt);
     ps.setControlsAllowed(health.controls_allowed_pkt);
+    ps.setControlsAllowedLong(health.controls_allowed_long_pkt);
     ps.setGasInterceptorDetected(health.gas_interceptor_detected_pkt);
     ps.setCanRxErrs(health.can_rx_errs_pkt);
     ps.setCanSendErrs(health.can_send_errs_pkt);

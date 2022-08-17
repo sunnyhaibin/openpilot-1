@@ -7,6 +7,7 @@ from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.hyundai.values import HyundaiFlags, DBC, FEATURES, CAMERA_SCC_CAR, CANFD_CAR, EV_CAR, HYBRID_CAR, Buttons, CarControllerParams
 from selfdrive.car.interfaces import CarStateBase
+from common.params import Params
 
 PREV_BUTTON_SAMPLES = 8
 
@@ -29,6 +30,26 @@ class CarState(CarStateBase):
       self.shifter_values = can_define.dv["TCU12"]["CUR_GR"]
     else:  # preferred and elect gear methods use same definition
       self.shifter_values = can_define.dv["LVR12"]["CF_Lvr_Gear"]
+
+    self.param_s = Params()
+    self.enable_mads = self.param_s.get_bool("EnableMads")
+    self.mads_disengage_lateral_on_brake = self.param_s.get_bool("DisengageLateralOnBrake")
+
+    self.accEnabled = False
+    self.madsEnabled = False
+    self.leftBlinkerOn = False
+    self.rightBlinkerOn = False
+    self.disengageByBrake = False
+    self.belowLaneChangeSpeed = True
+    self.mainEnabled = False
+
+    self.mads_enabled = None
+    self.prev_mads_enabled = None
+
+    self.prev_cruiseState_enabled = False
+
+    self.acc_mads_combo = None
+    self.prev_acc_mads_combo = None
 
     self.brake_error = False
     self.park_brake = False
@@ -138,6 +159,13 @@ class CarState(CarStateBase):
   def update_canfd(self, cp, cp_cam):
     ret = car.CarState.new_message()
 
+    self.prev_mads_enabled = self.mads_enabled
+    self.prev_main_buttons = self.main_buttons[-1]
+    self.prev_cruise_buttons = self.cruise_buttons[-1]
+    self.cruise_buttons.extend(cp.vl_all["CRUISE_BUTTONS"]["CRUISE_BUTTONS"])
+    self.main_buttons.extend(cp.vl_all["CRUISE_BUTTONS"]["ADAPTIVE_CRUISE_MAIN_BTN"])
+    self.acc_mads_combo = self.param_s.get_bool("AccMadsCombo")
+
     # TODO: find something common with EV6
     gas_scale = 1022. # if self.CP.carFingerprint in (CAR.TUCSON_HYBRID_4TH_GEN, ) else 255.
     cruise_info_bus = cp if self.CP.flags & HyundaiFlags.CANFD_HDA2 else cp_cam
@@ -145,6 +173,13 @@ class CarState(CarStateBase):
     ret.gas = cp.vl["ACCELERATOR"]["ACCELERATOR_PEDAL"] / gas_scale
     ret.gasPressed = ret.gas > 1e-3
     ret.brakePressed = cp.vl["BRAKE"]["BRAKE_PRESSED"] == 1
+
+    self.belowLaneChangeSpeed = ret.vEgo < (30 * CV.MPH_TO_MS)
+
+    self.mads_enabled = cp.vl["CRUISE_BUTTONS"]["LFA_BTN"] == 0
+
+    if self.prev_mads_enabled is None:
+      self.prev_mads_enabled = self.mads_enabled
 
     ret.doorOpen = cp.vl["DOORS_SEATBELTS"]["DRIVER_DOOR_OPEN"] == 1
     ret.seatbeltUnlatched = cp.vl["DOORS_SEATBELTS"]["DRIVER_SEATBELT_LATCHED"] == 0
@@ -173,15 +208,42 @@ class CarState(CarStateBase):
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(50, cp.vl["BLINKERS"]["LEFT_LAMP"],
                                                                       cp.vl["BLINKERS"]["RIGHT_LAMP"])
 
-    ret.cruiseState.available = True
+    self.leftBlinkerOn = cp.vl["BLINKERS"]["LEFT_LAMP"] != 0
+    self.rightBlinkerOn = cp.vl["BLINKERS"]["RIGHT_LAMP"] != 0
+
+    ret.cruiseState.available = cruise_info_bus.vl["CRUISE_INFO"]["CRUISE_MAIN"] == 1
     ret.cruiseState.enabled = cp.vl["SCC1"]["CRUISE_ACTIVE"] == 1
     ret.cruiseState.standstill = cruise_info_bus.vl["CRUISE_INFO"]["CRUISE_STANDSTILL"] == 1
 
     speed_factor = CV.MPH_TO_MS if cp.vl["CLUSTER_INFO"]["DISTANCE_UNIT"] == 1 else CV.KPH_TO_MS
     ret.cruiseState.speed = cruise_info_bus.vl["CRUISE_INFO"]["SET_SPEED"] * speed_factor
 
-    self.cruise_buttons.extend(cp.vl_all["CRUISE_BUTTONS"]["CRUISE_BUTTONS"])
-    self.main_buttons.extend(cp.vl_all["CRUISE_BUTTONS"]["ADAPTIVE_CRUISE_MAIN_BTN"])
+    if ret.cruiseState.available:
+      if self.enable_mads:
+        if self.prev_mads_enabled != 1:
+          if self.mads_enabled == 1:
+            self.madsEnabled = not self.madsEnabled
+        if self.acc_mads_combo:
+          if not self.prev_acc_mads_combo and ret.cruiseState.enabled:
+            self.madsEnabled = True
+          self.prev_acc_mads_combo = ret.cruiseState.enabled
+    else:
+      self.madsEnabled = False
+
+    if not self.enable_mads:
+      if self.prev_cruise_buttons != 4: # CANCEL
+        if self.cruise_buttons[-1] == 4:
+          if not self.enable_mads:
+            self.madsEnabled = False
+      if ret.brakePressed:
+        if not self.enable_mads:
+          self.madsEnabled = False
+
+    if not self.enable_mads:
+      if ret.cruiseState.enabled and not self.prev_cruiseState_enabled:
+        self.madsEnabled = True
+    self.prev_cruiseState_enabled = ret.cruiseState.enabled
+
     self.buttons_counter = cp.vl["CRUISE_BUTTONS"]["COUNTER"]
     self.cruise_info_copy = copy.copy(cruise_info_bus.vl["CRUISE_INFO"])
 
@@ -399,6 +461,7 @@ class CarState(CarStateBase):
       ("COUNTER", "CRUISE_BUTTONS"),
       ("CRUISE_BUTTONS", "CRUISE_BUTTONS"),
       ("ADAPTIVE_CRUISE_MAIN_BTN", "CRUISE_BUTTONS"),
+      ("LFA_BTN", "CRUISE_BUTTONS"),
 
       ("DISTANCE_UNIT", "CLUSTER_INFO"),
 

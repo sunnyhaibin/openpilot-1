@@ -37,8 +37,11 @@ def manager_init() -> None:
   params.clear_all(ParamKeyType.CLEAR_ON_MANAGER_START)
 
   default_params: List[Tuple[str, Union[str, bytes]]] = [
+    ("AccMadsCombo", "1"),
+    ("DisengageLateralOnBrake", "1"),
+    ("EnableMads", "1"),
     ("CompletedTrainingVersion", "0"),
-    ("DisengageOnAccelerator", "1"),
+    ("DisengageOnAccelerator", "0"),
     ("HasAcceptedTerms", "0"),
     ("OpenpilotEnabledToggle", "1"),
   ]

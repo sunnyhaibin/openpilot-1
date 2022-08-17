@@ -4,7 +4,7 @@ from selfdrive.car.hyundai.values import HyundaiFlags
 def create_lkas(packer, CP, enabled, lat_active, apply_steer):
   values = {
     "LKA_MODE": 2,
-    "LKA_ICON": 2 if enabled else 1,
+    "LKA_ICON": 2 if lat_active else 1,
     "TORQUE_REQUEST": apply_steer,
     "LKA_ASSIST": 0,
     "STEER_REQ": 1 if lat_active else 0,
@@ -38,10 +38,9 @@ def create_cruise_info(packer, cruise_info_copy, pcm_cancel_cmd):
     values["CRUISE_INACTIVE"] = 1
   return packer.make_can_msg("CRUISE_INFO", 4, values)
 
-def create_lfahda_cluster(packer, enabled):
+def create_lfahda_cluster(packer, enabled, lat_active, mads_enabled):
   values = {
     "HDA_ICON": 1 if enabled else 0,
-    "LFA_GREY": 0 if enabled else 1,
-    "LFA_GREEN": 1 if enabled else 0,
+    "LFA_ICON": 2 if lat_active else 1 if not lat_active and mads_enabled else 0,
   }
   return packer.make_can_msg("LFAHDA_CLUSTER", 4, values)

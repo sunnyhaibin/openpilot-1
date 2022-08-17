@@ -83,6 +83,9 @@ private:
 };
 
 std::unordered_map<std::string, uint32_t> keys = {
+    {"AccMadsCombo", PERSISTENT},
+    {"DisengageLateralOnBrake", PERSISTENT},
+    {"EnableMads", PERSISTENT},
     {"AccessToken", CLEAR_ON_MANAGER_START | DONT_LOG},
     {"AthenadPid", PERSISTENT},
     {"AthenadUploadQueue", PERSISTENT},
