@@ -71,7 +71,23 @@ void OnroadWindow::mousePressEvent(QMouseEvent* e) {
   bool sidebarVisible = geometry().x() > 0;
   bool propagate_event = true;
 
-  if (map != nullptr) {
+  const QRect dlp_btn_rect = QRect(bdr_s * 2 + 220, rect().bottom() - footer_h / 2 - 100, 192, 192);
+
+  if (uiState()->scene.dynamic_lane_profile_toggle && dlp_btn_rect.contains(e->x(), e->y())) {
+    uiState()->scene.dynamic_lane_profile = uiState()->scene.dynamic_lane_profile + 1;
+    if (uiState()->scene.dynamic_lane_profile > 2) {
+      uiState()->scene.dynamic_lane_profile = 0;
+    }
+    if (uiState()->scene.dynamic_lane_profile == 0) {
+      Params().put("DynamicLaneProfile", "0", 1);
+    } else if (uiState()->scene.dynamic_lane_profile == 1) {
+      Params().put("DynamicLaneProfile", "1", 1);
+    } else if (uiState()->scene.dynamic_lane_profile == 2) {
+      Params().put("DynamicLaneProfile", "2", 1);
+    }
+    propagate_event = false;
+  }
+  else if (map != nullptr) {
     map->setVisible(!sidebarVisible && !map->isVisible());
   }
   // propagation event to parent(HomeWindow)
@@ -229,6 +245,9 @@ void NvgWindow::updateState(const UIState &s) {
     setProperty("dmActive", sm["driverMonitoringState"].getDriverMonitoringState().getIsActiveMode());
     setProperty("rightHandDM", sm["driverMonitoringState"].getDriverMonitoringState().getIsRHD());
   }
+
+  setProperty("dynamicLaneProfileToggle", s.scene.dynamic_lane_profile_toggle);
+  setProperty("dynamicLaneProfile", s.scene.dynamic_lane_profile);
 
   if (s.scene.calibration_valid) {
     CameraViewWidget::updateCalibration(s.scene.view_from_calib);
@@ -396,6 +415,11 @@ void NvgWindow::drawHud(QPainter &p) {
     drawIcon(p, dm_icon_x, rect().bottom() - footer_h / 2,
              dm_img, blackColor(70), dmActive ? 1.0 : 0.2);
   }
+
+  // Dynamic Lane Profile Button
+  if (dynamicLaneProfileToggle) {
+    drawDlpButton(p, bdr_s * 2 + 220, rect().bottom() - footer_h / 2 - 100, 192, 192);
+  }
   p.restore();
 }
 
@@ -413,6 +437,34 @@ void NvgWindow::drawIcon(QPainter &p, int x, int y, QPixmap &img, QBrush bg, flo
   p.drawEllipse(x - radius / 2, y - radius / 2, radius, radius);
   p.setOpacity(opacity);
   p.drawPixmap(x - img_size / 2, y - img_size / 2, img);
+}
+
+void NvgWindow::drawDlpButton(QPainter &p, int x, int y, int w, int h) {
+  int prev_dynamic_lane_profile = -1;
+  QString dlp_text = "";
+  QColor dlp_border = QColor(255, 255, 255, 255);
+
+  if (prev_dynamic_lane_profile != dynamicLaneProfile) {
+    prev_dynamic_lane_profile = dynamicLaneProfile;
+    if (dynamicLaneProfile == 0) {
+      dlp_text = "Lane\nonly";
+      dlp_border = QColor("#2020f8");
+    } else if (dynamicLaneProfile == 1) {
+      dlp_text = "Lane\nless";
+      dlp_border = QColor("#0df87a");
+    } else if (dynamicLaneProfile == 2) {
+      dlp_text = "Auto\nLane";
+      dlp_border = QColor("#0df8f8");
+    }
+  }
+
+  QRect dlpBtn(x, y, w, h);
+  p.setPen(QPen(dlp_border, 12));
+  p.setBrush(QColor(75, 75, 75, 75));
+  p.drawEllipse(dlpBtn);
+  p.setPen(QColor(Qt::white));
+  configFont(p, "Open Sans", 45, "Regular");
+  p.drawText(dlpBtn, Qt::AlignCenter, dlp_text);
 }
 
 
@@ -468,14 +520,25 @@ void NvgWindow::drawLaneLines(QPainter &painter, const UIState *s) {
   if (orientation.getZ().size() > 16) {
     orientation_future = std::abs(orientation.getZ()[16]);  // 2.5 seconds
   }
-  // straight: 112, in turns: 70
-  float curve_hue = fmax(70, 112 - (orientation_future * 420));
-  // FIXME: painter.drawPolygon can be slow if hue is not rounded
-  curve_hue = int(curve_hue * 100 + 0.5) / 100;
+  if (scene.lateralPlan.dynamicLaneProfileStatus) {
+    // straight: 112, in turns: 70
+    float curve_hue = fmax(70, 112 - (orientation_future * 420));
+    // FIXME: painter.drawPolygon can be slow if hue is not rounded
+    curve_hue = int(curve_hue * 100 + 0.5) / 100;
 
-  bg.setColorAt(0.0, QColor::fromHslF(148 / 360., 0.94, 0.51, 0.4));
-  bg.setColorAt(0.75 / 1.5, QColor::fromHslF(curve_hue / 360., 1.0, 0.68, 0.35));
-  bg.setColorAt(1.0, QColor::fromHslF(curve_hue / 360., 1.0, 0.68, 0.0));
+    bg.setColorAt(0.0, QColor::fromHslF(148 / 360., 0.94, 0.51, 0.4));
+    bg.setColorAt(0.75 / 1.5, QColor::fromHslF(curve_hue / 360., 1.0, 0.68, 0.35));
+    bg.setColorAt(1.0, QColor::fromHslF(curve_hue / 360., 1.0, 0.68, 0.0));
+  } else {
+    // straight: 204, in turns: 162
+    float curve_hue2 = fmax(162, 204 - (orientation_future * 420));
+    // FIXME: painter.drawPolygon can be slow if hue is not rounded
+    curve_hue2 = int(curve_hue2 * 100 + 0.5) / 100;
+
+    bg.setColorAt(0.0, QColor::fromHslF(240 / 360., 0.94, 0.51, 0.4));
+    bg.setColorAt(0.75 / 1.5, QColor::fromHslF(curve_hue2 / 360., 1.0, 0.68, 0.35));
+    bg.setColorAt(1.0, QColor::fromHslF(curve_hue2 / 360., 1.0, 0.68, 0.0));
+  }
   painter.setBrush(bg);
   painter.drawPolygon(scene.track_vertices);
 

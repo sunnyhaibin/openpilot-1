@@ -89,6 +89,7 @@ typedef struct UIScene {
   bool calibration_valid = false;
   mat3 view_from_calib = DEFAULT_CALIBRATION;
   cereal::PandaState::PandaType pandaType;
+  cereal::LateralPlan::Reader lateral_plan;
 
   // modelV2
   float lane_line_probs[4];
@@ -101,8 +102,12 @@ typedef struct UIScene {
   QPointF lead_vertices[2];
 
   float light_sensor, accel_sensor, gyro_sensor;
-  bool started, ignition, is_metric, map_on_left, longitudinal_control;
+  bool started, ignition, is_metric, map_on_left, longitudinal_control, dynamic_lane_profile_toggle;
   uint64_t started_frame;
+  int dynamic_lane_profile;
+  struct _LateralPlan {
+    bool dynamicLaneProfileStatus;
+  } lateralPlan;
 } UIScene;
 
 class UIState : public QObject {

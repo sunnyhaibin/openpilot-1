@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include <QtConcurrent>
+#include <string>
 
 #include "common/transformations/orientation.hpp"
 #include "common/params.h"
@@ -189,6 +190,9 @@ static void update_state(UIState *s) {
     scene.light_sensor = std::clamp<float>(1.0 - (ev / max_ev), 0.0, 1.0);
   }
   scene.started = sm["deviceState"].getDeviceState().getStarted() && scene.ignition;
+  if (sm.updated("lateralPlan")) {
+    scene.lateralPlan.dynamicLaneProfileStatus = sm["lateralPlan"].getLateralPlan().getDynamicLaneProfile();
+  }
 }
 
 void ui_update_params(UIState *s) {
@@ -219,6 +223,8 @@ void UIState::updateStatus() {
       status = STATUS_DISENGAGED;
       scene.started_frame = sm->frame;
       wide_camera = Params().getBool("WideCameraOnly");
+      scene.dynamic_lane_profile_toggle = Params().getBool("DynamicLaneProfileToggle");
+      scene.dynamic_lane_profile = std::stoi(Params().get("DynamicLaneProfile"));
     }
     started_prev = scene.started;
     emit offroadTransition(!scene.started);
@@ -229,7 +235,7 @@ UIState::UIState(QObject *parent) : QObject(parent) {
   sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "roadCameraState",
     "pandaStates", "carParams", "driverMonitoringState", "sensorEvents", "carState", "liveLocationKalman",
-    "wideRoadCameraState", "managerState", "navInstruction", "navRoute", "gnssMeasurements",
+    "wideRoadCameraState", "managerState", "navInstruction", "navRoute", "gnssMeasurements", "lateralPlan",
   });
 
   Params params;

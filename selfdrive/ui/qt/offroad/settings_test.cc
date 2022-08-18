@@ -71,11 +71,19 @@ SPControlsPanel::SPControlsPanel(QWidget* parent) : QWidget(parent) {
       customTorqueMain->hide();
     }
   });
-  main_layout->addWidget(horizontal_line());
   main_layout->addWidget(customTorqueLateral);
   main_layout->addWidget(customTorqueMain);
   if (!Params().getBool("CustomTorqueLateral"))
     customTorqueMain->hide();
+  ParamControl *dlpControl = new ParamControl("DynamicLaneProfileToggle",
+                                              "Enable Dynamic Lane Profile",
+                                              "Enable toggle to use Dynamic Lane Profile. Disable toggle to use Laneless only.",
+                                              "../assets/offroad/icon_road.png");
+  QObject::connect(uiState(), &UIState::offroadTransition, [=](bool offroad) {
+    dlpControl->setEnabled(offroad);
+  });
+  main_layout->addWidget(horizontal_line());
+  main_layout->addWidget(dlpControl);
 }
 
 TorqueFriction::TorqueFriction() : AbstractControl("Friction", "Adjust Friction for the Torque Lateral Controller", "../assets/offroad/icon_blank.png") {

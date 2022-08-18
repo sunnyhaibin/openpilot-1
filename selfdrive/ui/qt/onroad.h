@@ -41,6 +41,8 @@ class NvgWindow : public CameraViewWidget {
   Q_PROPERTY(bool hideDM MEMBER hideDM);
   Q_PROPERTY(bool rightHandDM MEMBER rightHandDM);
   Q_PROPERTY(int status MEMBER status);
+  Q_PROPERTY(bool dynamicLaneProfileToggle MEMBER dynamicLaneProfileToggle);
+  Q_PROPERTY(int dynamicLaneProfile MEMBER dynamicLaneProfile);
 
 public:
   explicit NvgWindow(VisionStreamType type, QWidget* parent = 0);
@@ -49,6 +51,7 @@ public:
 private:
   void drawIcon(QPainter &p, int x, int y, QPixmap &img, QBrush bg, float opacity);
   void drawText(QPainter &p, int x, int y, const QString &text, int alpha = 255);
+  void drawDlpButton(QPainter &p, int x, int y, int w, int h);
 
   QPixmap engage_img;
   QPixmap dm_img;
@@ -68,6 +71,8 @@ private:
   bool has_eu_speed_limit = false;
   bool v_ego_cluster_seen = false;
   int status = STATUS_DISENGAGED;
+  bool dynamicLaneProfileToggle;
+  int dynamicLaneProfile;
 
 protected:
   void paintGL() override;

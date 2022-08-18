@@ -44,6 +44,8 @@ def manager_init() -> None:
     ("TorqueDeadzoneDeg", "0"),
     ("TorqueFriction", "1"),
     ("TorqueMaxLatAccel", "250"),
+    ("DynamicLaneProfile", "2"),
+    ("DynamicLaneProfileToggle", "1"),
     ("CompletedTrainingVersion", "0"),
     ("DisengageOnAccelerator", "0"),
     ("HasAcceptedTerms", "0"),
