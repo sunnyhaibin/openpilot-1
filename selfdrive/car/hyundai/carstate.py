@@ -174,8 +174,6 @@ class CarState(CarStateBase):
     ret.gasPressed = ret.gas > 1e-3
     ret.brakePressed = cp.vl["BRAKE"]["BRAKE_PRESSED"] == 1
 
-    self.belowLaneChangeSpeed = ret.vEgo < (30 * CV.MPH_TO_MS)
-
     self.mads_enabled = cp.vl["CRUISE_BUTTONS"]["LFA_BTN"] == 0
 
     if self.prev_mads_enabled is None:
@@ -198,6 +196,8 @@ class CarState(CarStateBase):
     ret.vEgoRaw = (ret.wheelSpeeds.fl + ret.wheelSpeeds.fr + ret.wheelSpeeds.rl + ret.wheelSpeeds.rr) / 4.
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw < 0.1
+
+    self.belowLaneChangeSpeed = ret.vEgo < (30 * CV.MPH_TO_MS)
 
     ret.steeringRateDeg = cp.vl["STEERING_SENSORS"]["STEERING_RATE"]
     ret.steeringAngleDeg = cp.vl["STEERING_SENSORS"]["STEERING_ANGLE"] * -1
