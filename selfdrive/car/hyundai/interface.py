@@ -308,7 +308,7 @@ class CarInterface(CarInterfaceBase):
           ret.flags |= HyundaiFlags.CANFD_ALT_PEDALS.value
           ret.safetyConfigs[1].safetyParam |= Panda.FLAG_HYUNDAI_CANFD_ALT_PEDALS
         if 0x130 not in fingerprint[4]:
-          ret.flags |= HyundaiFlags.CANFD_ALT_GEAR.value
+          ret.flags |= HyundaiFlags.CANFD_ALT_GEARS.value
     else:
       ret.enableBsm = 0x58b in fingerprint[0]
 
