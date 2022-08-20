@@ -11,6 +11,7 @@ Version 0.8.16 (2022-08-26)
 * Chevrolet Silverado 2020-21 support thanks to JasonJShuler!
 * Hyundai Ioniq 5 2022 support thanks to sunnyhaibin!
 * Hyundai Kona Electric 2022 support thanks to sunnyhaibin!
+* Hyundai Santa Cruz 2022 support thanks to sunnyhaibin!
 * Hyundai Tucson Hybrid 2022 support thanks to sunnyhaibin!
 * Subaru Legacy 2020-22 support thanks to martinl!
 * Subaru Outback 2020-22 support

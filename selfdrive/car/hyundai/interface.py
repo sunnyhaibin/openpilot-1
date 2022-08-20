@@ -166,6 +166,11 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.
       tire_stiffness_factor = 0.385
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
+    elif candidate == CAR.SANTA_CRUZ_1ST_GEN:
+      ret.mass = 1870. + STD_CARGO_KG  # weight from Limited trim - the only supported trim
+      ret.wheelbase = 3.000
+      ret.steerRatio = 14.2 # steering ratio according to Hyundai News https://www.hyundainews.com/assets/documents/original/48035-2022SantaCruzProductGuideSpecsv2081521.pdf
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
     # Kia
     elif candidate == CAR.KIA_SORENTO:
@@ -299,6 +304,11 @@ class CarInterface(CarInterfaceBase):
         # non-HDA2
         if 0x1cf not in fingerprint[4]:
           ret.flags |= HyundaiFlags.CANFD_ALT_BUTTONS.value
+        if 0x100 in fingerprint[4]:
+          ret.flags |= HyundaiFlags.CANFD_ALT_PEDALS.value
+          ret.safetyConfigs[1].safetyParam |= Panda.FLAG_HYUNDAI_CANFD_ALT_PEDALS
+        if 0x130 not in fingerprint[4]:
+          ret.flags |= HyundaiFlags.CANFD_ALT_GEAR.value
     else:
       ret.enableBsm = 0x58b in fingerprint[0]
 
