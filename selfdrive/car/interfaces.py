@@ -1,3 +1,6 @@
+# must be built with scons
+from .messaging_pyx import SubSocket, PubSocket
+
 import yaml
 import os
 import time
@@ -86,18 +89,20 @@ class CarInterfaceBase(ABC):
       self.CC = CarController(self.cp.dbc_name, CP, self.VM)
 
   @staticmethod
-  def get_pid_accel_limits(CP, current_speed, cruise_speed):
+  def get_pid_accel_limits(CP: car.CarParams, current_speed: float, cruise_speed: float) -> Tuple[float, float]:
     return ACCEL_MIN, ACCEL_MAX
 
   @classmethod
-  def get_non_essential_params(cls, candidate: str):
+  def get_non_essential_params(cls, candidate: str) -> car.CarParams:
     """
     Parameters essential to controlling the car may be incomplete or wrong without FW versions or fingerprints.
     """
     return cls.get_params(candidate, gen_empty_fingerprint(), list(), False, False)
 
   @classmethod
-  def get_params(cls, candidate: str, fingerprint: Dict[int, Dict[int, int]], car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool):
+  def get_params(cls, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                 car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
+
     ret = CarInterfaceBase.get_std_params(candidate)
     ret = cls._get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs)
 
@@ -114,20 +119,20 @@ class CarInterfaceBase(ABC):
   @staticmethod
   @abstractmethod
   def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
-                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool):
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     raise NotImplementedError
 
   @staticmethod
-  def init(CP, logcan, sendcan):
+  def init(CP: car.CarParams, logcan: SubSocket, sendcan: PubSocket):
     pass
 
   @staticmethod
-  def get_steer_feedforward_default(desired_angle, v_ego):
+  def get_steer_feedforward_default(desired_angle: float, v_ego: float) -> float:
     # Proportional to realigning tire momentum: lateral acceleration.
     # TODO: something with lateralPlan.curvatureRates
     return desired_angle * (v_ego**2)
 
-  def get_steer_feedforward_function(self):
+  def get_steer_feedforward_function(self) -> Callable[[float, float], float]:
     return self.get_steer_feedforward_default
 
   def torque_from_lateral_accel_linear(self, lateral_accel_value: float, torque_params: car.CarParams.LateralTorqueTuning,
@@ -141,7 +146,7 @@ class CarInterfaceBase(ABC):
 
   # returns a set of default params to avoid repetition in car specific params
   @staticmethod
-  def get_std_params(candidate):
+  def get_std_params(candidate: str) -> car.CarParams:
     ret = car.CarParams.new_message()
     ret.carFingerprint = candidate
 
@@ -178,7 +183,9 @@ class CarInterfaceBase(ABC):
     return ret
 
   @staticmethod
-  def configure_torque_tune(candidate, tune, steering_angle_deadzone_deg=0.0, use_steering_angle=True):
+  def configure_torque_tune(candidate: str, tune: car.CarParams.LateralTorqueTuning,
+                            steering_angle_deadzone_deg: float = 0.0, use_steering_angle: bool = True):
+
     params = get_torque_params(candidate)
 
     tune.init('torque')
@@ -232,8 +239,8 @@ class CarInterfaceBase(ABC):
   def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     pass
 
-  def create_common_events(self, cs_out, extra_gears=None, pcm_enable=True, allow_enable=True,
-                           enable_buttons=(ButtonType.accelCruise, ButtonType.decelCruise)):
+  def create_common_events(self, cs_out: car.CarParams, extra_gears: List[GearShifter] = None, pcm_enable: bool = True, allow_enable: bool = True,
+                           enable_buttons: bool = (ButtonType.accelCruise, ButtonType.decelCruise)) -> List[Events]:
     events = Events()
 
     if cs_out.doorOpen:

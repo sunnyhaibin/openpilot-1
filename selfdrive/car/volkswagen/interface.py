@@ -1,3 +1,5 @@
+from typing import Dict, Tuple, List
+
 from cereal import car
 from panda import Panda
 from openpilot.common.conversions import Conversions as CV
@@ -23,7 +25,8 @@ class CarInterface(CarInterfaceBase):
     self.eps_timer_soft_disable_alert = False
 
   @staticmethod
-  def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     ret.carName = "volkswagen"
     ret.radarUnavailable = True
 
@@ -223,8 +226,7 @@ class CarInterface(CarInterfaceBase):
     ret.centerToFront = ret.wheelbase * 0.45
     return ret
 
-  # returns a car.CarState
-  def _update(self, c):
+  def _update(self, c: car.CarControl) -> car.CarState:
     ret = self.CS.update(self.cp, self.cp_cam, self.cp_ext, self.CP.transmissionType)
 
     events = self.create_common_events(ret, extra_gears=[GearShifter.eco, GearShifter.sport, GearShifter.manumatic],
@@ -252,6 +254,6 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def apply(self, c, now_nanos):
+  def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     new_actuators, can_sends, self.eps_timer_soft_disable_alert = self.CC.update(c, self.CS, self.ext_bus, now_nanos)
     return new_actuators, can_sends

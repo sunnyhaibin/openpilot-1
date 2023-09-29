@@ -1,3 +1,8 @@
+# must be built with scons
+from .messaging_pyx import SubSocket, PubSocket
+
+from typing import Dict, Tuple, List
+
 from cereal import car
 from panda import Panda
 from openpilot.common.conversions import Conversions as CV
@@ -20,7 +25,8 @@ BUTTONS_DICT = {Buttons.RES_ACCEL: ButtonType.accelCruise, Buttons.SET_DECEL: Bu
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
-  def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     ret.carName = "hyundai"
     ret.radarUnavailable = RADAR_START_ADDR not in fingerprint[1] or DBC[ret.carFingerprint]["radar"] is None
 
@@ -322,7 +328,7 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   @staticmethod
-  def init(CP, logcan, sendcan):
+  def init(CP: car.CarParams, logcan: SubSocket, sendcan: PubSocket):
     if CP.openpilotLongitudinalControl and not (CP.flags & HyundaiFlags.CANFD_CAMERA_SCC.value):
       addr, bus = 0x7d0, 0
       if CP.flags & HyundaiFlags.CANFD_HDA2.value:
@@ -333,7 +339,7 @@ class CarInterface(CarInterfaceBase):
     if CP.flags & HyundaiFlags.ENABLE_BLINKERS:
       disable_ecu(logcan, sendcan, bus=CanBus(CP).ECAN, addr=0x7B1, com_cont_req=b'\x28\x83\x01')
 
-  def _update(self, c):
+  def _update(self, c: car.CarControl) -> car.CarState:
     ret = self.CS.update(self.cp, self.cp_cam)
 
     if self.CS.CP.openpilotLongitudinalControl:
@@ -357,5 +363,5 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def apply(self, c, now_nanos):
+  def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     return self.CC.update(c, self.CS, now_nanos)

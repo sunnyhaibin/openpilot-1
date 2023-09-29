@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from typing import Dict, Tuple, List
+
 from cereal import car
 from math import fabs, exp
 from panda import Panda
@@ -28,7 +30,7 @@ NON_LINEAR_TORQUE_PARAMS = {
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
-  def get_pid_accel_limits(CP, current_speed, cruise_speed):
+  def get_pid_accel_limits(CP: car.CarParams, current_speed: float, cruise_speed: float) -> Tuple[float, float]:
     return CarControllerParams.ACCEL_MIN, CarControllerParams.ACCEL_MAX
 
   # Determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
@@ -68,7 +70,8 @@ class CarInterface(CarInterfaceBase):
       return self.torque_from_lateral_accel_linear
 
   @staticmethod
-  def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     ret.carName = "gm"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.gm)]
     ret.autoResumeSng = False
@@ -249,8 +252,7 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  # returns a car.CarState
-  def _update(self, c):
+  def _update(self, c: car.CarControl) -> car.CarState:
     ret = self.CS.update(self.cp, self.cp_cam, self.cp_loopback)
 
     # Don't add event if transitioning from INIT, unless it's to an actual button
@@ -281,5 +283,5 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def apply(self, c, now_nanos):
+  def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     return self.CC.update(c, self.CS, now_nanos)

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from typing import Dict, Tuple, List
+
 from cereal import car
 from openpilot.common.conversions import Conversions as CV
 from openpilot.selfdrive.car.mazda.values import CAR, LKAS_LIMITS
@@ -11,7 +13,8 @@ EventName = car.CarEvent.EventName
 class CarInterface(CarInterfaceBase):
 
   @staticmethod
-  def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     ret.carName = "mazda"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.mazda)]
     ret.radarUnavailable = True
@@ -48,8 +51,7 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  # returns a car.CarState
-  def _update(self, c):
+  def _update(self, c: car.CarControl) -> car.CarState:
     ret = self.CS.update(self.cp, self.cp_cam)
 
     # events
@@ -64,5 +66,5 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def apply(self, c, now_nanos):
+  def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     return self.CC.update(c, self.CS, now_nanos)

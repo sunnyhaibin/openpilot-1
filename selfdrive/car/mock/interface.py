@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from typing import Dict, Tuple, List
+
 from cereal import car
 import cereal.messaging as messaging
 from openpilot.selfdrive.car.interfaces import CarInterfaceBase
@@ -12,7 +14,8 @@ class CarInterface(CarInterfaceBase):
     self.sm = messaging.SubMaster(['gpsLocation', 'gpsLocationExternal'])
 
   @staticmethod
-  def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     ret.carName = "mock"
     ret.mass = 1700.
     ret.wheelbase = 2.70
@@ -20,7 +23,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerRatio = 13.
     return ret
 
-  def _update(self, c):
+  def _update(self, c: car.CarControl) -> car.CarState:
     self.sm.update(0)
     gps_sock = 'gpsLocationExternal' if self.sm.rcv_frame['gpsLocationExternal'] > 1 else 'gpsLocation'
 
@@ -30,6 +33,6 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def apply(self, c, now_nanos):
+  def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     actuators = car.CarControl.Actuators.new_message()
     return actuators, []

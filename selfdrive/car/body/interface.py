@@ -1,3 +1,5 @@
+from typing import Dict, Tuple, List
+
 import math
 from cereal import car
 from openpilot.common.realtime import DT_CTRL
@@ -7,7 +9,8 @@ from openpilot.selfdrive.car.body.values import SPEED_FROM_RPM
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
-  def _get_params(ret, candidate, fingerprint, car_fw, experimental_long, docs):
+  def _get_params(ret: car.CarParams, candidate: str, fingerprint: Dict[int, Dict[int, int]],
+                  car_fw: List[car.CarParams.CarFw], experimental_long: bool, docs: bool) -> car.CarParams:
     ret.notCar = True
     ret.carName = "body"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.body)]
@@ -29,7 +32,7 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def _update(self, c):
+  def _update(self, c: car.CarControl) -> car.CarState:
     ret = self.CS.update(self.cp)
 
     # wait for everything to init first
@@ -42,5 +45,5 @@ class CarInterface(CarInterfaceBase):
 
     return ret
 
-  def apply(self, c, now_nanos):
+  def apply(self, c: car.CarControl, now_nanos: int) -> Tuple[car.CarControl.Actuators, List[bytes]]:
     return self.CC.update(c, self.CS, now_nanos)
