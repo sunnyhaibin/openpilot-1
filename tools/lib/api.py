@@ -24,7 +24,7 @@ class CommaApi:
       return resp_json
 
   def get(self, endpoint, **kwargs):
-    return self.request('GET', endpoint, **kwargs)
+    return self.request('GET', endpoint, **kwargs)  # test ci
 
   def post(self, endpoint, **kwargs):
     return self.request('POST', endpoint, **kwargs)
